@@ -287,8 +287,12 @@
       }
       return `完成：${fmt(d.finishedAt)}${cost}`;
     }
+
+    // ======= 修改這裡：只有刪除/退回/復原才需要 PIN =======
     async function onAction(id, d, action) {
-      if (ADMIN_PIN) {
+      // 只有這三個操作需要 PIN 驗證
+      const needPin = (action === 'remove' || action === 'pause' || action === 'restore');
+      if (needPin && ADMIN_PIN) {
         const input = prompt('請輸入管理 PIN：');
         if (input !== ADMIN_PIN) { alert('PIN 錯誤'); return; }
       }
@@ -313,11 +317,9 @@
         alert('操作失敗：' + e.message);
       }
     }
+
+    // ======= 「開始下一位」不需要 PIN =======
     document.getElementById('btnStartNext').addEventListener('click', async () => {
-      if (ADMIN_PIN) {
-        const input = prompt('請輸入管理 PIN：');
-        if (input !== ADMIN_PIN) { alert('PIN 錯誤'); return; }
-      }
       try {
         const snap = await db.collection(COLLECTION).where('status', '==', 'waiting').orderBy('order').limit(1).get();
         if (snap.empty) { alert('沒有等待中的項目'); return; }
@@ -328,6 +330,7 @@
         alert('開始下一位失敗：' + e.message);
       }
     });
+
     document.getElementById('btnExportCSV').addEventListener('click', async () => {
       try {
         const snap = await db.collection(COLLECTION).orderBy('order').get();
